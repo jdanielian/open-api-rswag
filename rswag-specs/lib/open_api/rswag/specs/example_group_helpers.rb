@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'active_support/core_ext/object/blank'
 require 'hashie'
 
 module OpenApi
@@ -151,8 +152,12 @@ module OpenApi
         end
 
         def response(code, description, metadata = {}, &block)
-          metadata[:response] = { code: code, description: description }
+          metadata[:response] = { code: code, description: description, examples: {} }
           context(description, metadata, &block)
+        end
+
+        def example(description, metadata = {}, &block)
+          context(description, metadata.merge(response_example: true), &block)
         end
 
         def schema(value, content_type: 'application/json')
@@ -244,9 +249,12 @@ module OpenApi
               body_parameter = example.metadata[:operation]&.dig(:parameters)&.detect { |p| p[:in] == :body && p[:required] }
 
               if body_parameter && respond_to?(body_parameter[:name]) && example.metadata[:operation][:requestBody][:content]['application/json']
+                example_name = example.example_group.description
+
                 # save response examples by default
-                if example.metadata[:response][:examples].nil? || example.metadata[:response][:examples].empty?
-                  example.metadata[:response][:examples] = { 'application/json' => JSON.parse(response.body, symbolize_names: true) } unless response.body.to_s.empty?
+                if example.metadata[:response][:examples].dig('application/json', example_name).blank? && !response.body.to_s.empty?
+                  json_responses = example.metadata[:response][:examples]['application/json'] ||= {}
+                  json_responses[example_name] = JSON.parse(response.body, symbolize_names: true)
                 end
 
                 # save request examples using the let(:param_name) { REQUEST_BODY_HASH } syntax in the test
