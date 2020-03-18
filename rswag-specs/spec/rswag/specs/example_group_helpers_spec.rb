@@ -36,31 +36,6 @@ module OpenApi
           end
         end
 
-        describe '#tags|description|operationId|consumes|produces|schemes|deprecated(value)' do
-          before do
-            subject.tags('Blogs', 'Admin')
-            subject.description('Some description')
-            subject.operationId('createBlog')
-            subject.consumes('application/json', 'application/xml')
-            subject.produces('application/json', 'application/xml')
-            subject.schemes('http', 'https')
-            subject.deprecated(true)
-          end
-          let(:api_metadata) { { operation: {} } }
-
-          it "adds to the 'operation' metadata" do
-            expect(api_metadata[:operation]).to match(
-                                                    tags: %w[Blogs Admin],
-                                                    description: 'Some description',
-                                                    operationId: 'createBlog',
-                                                    consumes: ['application/json', 'application/xml'],
-                                                    produces: ['application/json', 'application/xml'],
-                                                    schemes: %w[http https],
-                                                    deprecated: true
-                                                )
-          end
-        end
-
         describe '#tags|description|operationId|consumes|produces|schemes|deprecated|security(value)' do
           before do
             subject.tags('Blogs', 'Admin')
