@@ -203,19 +203,19 @@ module OpenApi
 
           external_example = example_metadata[:operation]&.dig(:parameters)&.detect { |p| p[:in] == :body && p[:name].is_a?(Hash) && p[:name][:externalValue] } || {}
           ref_example = example_metadata[:operation]&.dig(:parameters)&.detect { |p| p[:in] == :body && p[:name].is_a?(Hash) && p[:name]['$ref'] } || {}
-          examples_node = content_node[:examples] ||= {}
 
           nodes_to_add = []
           nodes_to_add << external_example unless external_example.empty?
           nodes_to_add << ref_example unless ref_example.empty?
 
+          return if nodes_to_add.empty?
+          examples_node = content_node[:examples] ||= {}
+
           nodes_to_add.each do |node|
-            json_request_examples = examples_node ||= {}
             other_name = node[:name][:name]
+            next unless other_name
             other_key = node[:name][:externalValue] ? :externalValue : '$ref'
-            if other_name
-              json_request_examples.merge!(other_name => {other_key => node[:param_value]})
-            end
+            examples_node[other_name] = { other_key => node[:param_value] }
           end
         end
 
@@ -251,11 +251,9 @@ module OpenApi
 
                 # save request examples using the let(:param_name) { REQUEST_BODY_HASH } syntax in the test
                 if response.code.to_s =~ /^2\d{2}$/
-                  example.metadata[:operation][:requestBody][:content]['application/json'] = { examples: {} } unless example.metadata[:operation][:requestBody][:content]['application/json'][:examples]
-                  json_request_examples = example.metadata[:operation][:requestBody][:content]['application/json'][:examples]
+                  json_request = example.metadata[:operation][:requestBody][:content]['application/json'] ||= {}
+                  json_request_examples = json_request[:examples] ||= {}
                   json_request_examples[body_parameter[:name]] = { value: send(body_parameter[:name]) }
-
-                  example.metadata[:operation][:requestBody][:content]['application/json'][:examples] = json_request_examples
                 end
               end
 
