@@ -24,7 +24,7 @@ module OpenApi
 
             return [
               '200',
-              { 'Content-Type' => 'mine' },
+              { 'Content-Type' => mime },
               [ body ]
             ]
           end
