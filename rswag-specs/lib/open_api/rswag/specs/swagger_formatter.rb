@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'active_support/core_ext/hash/deep_merge'
+require 'active_support/core_ext/object/blank'
 require 'swagger_helper'
 
 module OpenApi
@@ -27,7 +28,7 @@ module OpenApi
                        notification.metadata
                      end
 
-          return unless metadata.key?(:response)
+          return unless metadata.key?(:response) && !metadata[:response_example]
 
           swagger_doc = @config.get_swagger_doc(metadata[:swagger_doc])
           swagger_doc.deep_merge!(metadata_to_swagger(metadata))
@@ -86,16 +87,25 @@ module OpenApi
         def metadata_to_swagger(metadata)
           response_code = metadata[:response][:code]
           response = metadata[:response].reject { |k, _v| k == :code }
-          content_type = metadata[:response][:content].present? ? metadata[:response][:content].keys.first : 'application/json'
 
           # need to merge in to response
-          if response[:examples]&.dig(content_type)
-            example = response[:examples].dig(content_type).dup
+          response.delete(:examples).each do |content_type, examples|
+            new_examples = examples.each_with_object({}) do |(description, value), hash|
+              hash[description.parameterize(separator: '_')] = {
+                summary: description,
+                value: value.dup
+              }
+            end
+
+            new_hash = {}
             schema = response.dig(:content, content_type, :schema)
-            new_hash = {example: example}
-            new_hash[:schema] = schema if schema
-            response.merge!(content: { content_type => new_hash })
-            response.delete(:examples)
+            new_hash[:schema] = schema unless schema.blank?
+            new_hash[:examples] = new_examples unless new_examples.blank?
+
+            unless new_hash.empty?
+              response[:content] ||= {}
+              response[:content][content_type] = new_hash
+            end
           end
 
           verb = metadata[:operation][:verb]

@@ -28,7 +28,7 @@ module OpenApi
             {
                 path_item: { template: '/blogs' },
                 operation: { verb: :post, summary: 'Creates a blog' },
-                response: { code: '201', description: 'blog created' }
+                response: { code: '201', description: 'blog created', examples: {} }
             }
           end
 
