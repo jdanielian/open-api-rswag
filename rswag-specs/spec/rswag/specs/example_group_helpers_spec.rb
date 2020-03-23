@@ -36,31 +36,6 @@ module OpenApi
           end
         end
 
-        describe '#tags|description|operationId|consumes|produces|schemes|deprecated(value)' do
-          before do
-            subject.tags('Blogs', 'Admin')
-            subject.description('Some description')
-            subject.operationId('createBlog')
-            subject.consumes('application/json', 'application/xml')
-            subject.produces('application/json', 'application/xml')
-            subject.schemes('http', 'https')
-            subject.deprecated(true)
-          end
-          let(:api_metadata) { { operation: {} } }
-
-          it "adds to the 'operation' metadata" do
-            expect(api_metadata[:operation]).to match(
-                                                    tags: %w[Blogs Admin],
-                                                    description: 'Some description',
-                                                    operationId: 'createBlog',
-                                                    consumes: ['application/json', 'application/xml'],
-                                                    produces: ['application/json', 'application/xml'],
-                                                    schemes: %w[http https],
-                                                    deprecated: true
-                                                )
-          end
-        end
-
         describe '#tags|description|operationId|consumes|produces|schemes|deprecated|security(value)' do
           before do
             subject.tags('Blogs', 'Admin')
@@ -192,6 +167,22 @@ module OpenApi
             expect(api_metadata[:response][:headers]).to match(
                                                              'Date' => {schema: { type: 'string' }}
                                                          )
+          end
+        end
+
+        describe '#link(name, attributes)' do
+          before do
+            subject.link('GetUserByUserId', '$ref' => '#/components/links/GetUserByUserId')
+            subject.link('GetUserByReference', '$ref' => '#/components/links/GetUserByReference')
+          end
+
+          let(:api_metadata) { { response: {} } }
+
+          it "adds to the 'response links' metadata" do
+            expect(api_metadata[:response][:links]).to match(
+              'GetUserByUserId' => { '$ref' => '#/components/links/GetUserByUserId' },
+              'GetUserByReference' => { '$ref' => '#/components/links/GetUserByReference' }
+            )
           end
         end
 
