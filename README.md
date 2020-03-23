@@ -261,6 +261,34 @@ RSpec.configure do |config|
 end
 ```
 
+In order for rspec to still run properly when using a namespaced API for versioning (e.g. 'api/v1', 'api/v2'), the above swagger_docs will need the basePath metadata defined for each namespace.
+
+```ruby
+'v1/swagger.json' => {
+  openapi: '3.0.0',
+  info: {
+    title: 'API V1',
+    version: 'v1',
+    description: 'This is the first version of my API'
+  },
+  basePath: '/api/v1'
+  servers: [
+    {
+      url: 'http://localhost:3001/api/{version}',
+      description: 'The local development server.',
+      variables: {
+        version: {
+          enum: [
+            'v1'
+          ],
+          default: 'v1'
+        }
+      }
+    }
+  ]
+}
+```
+
 #### Supporting multiple versions of API #### 
 By default, the paths, operations and responses defined in your spec files will be associated with the first Swagger document in _swagger_helper.rb_. If your API has multiple versions, you should be using separate documents to describe each of them. In order to assign a file with a given version of API, you'll need to add the ```swagger_doc``` tag to each spec specifying its target document name:
 
